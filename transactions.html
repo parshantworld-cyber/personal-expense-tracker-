@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Dedicated Transactions Ledger and Expense Management for Parshant's Expense - Personal Finance Dashboard.">
+    <title>Transactions | Parshant's Expense</title>
+
+    <!-- Google Fonts: Plus Jakarta Sans for modern fintech typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Custom Modern Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=6.0">
+
+    <!-- Theme Initialization Script (Prevents flash of wrong theme) -->
+    <script>
+        (function() {
+            try {
+                var storedTheme = localStorage.getItem('apex_theme');
+                var theme = storedTheme || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {}
+        })();
+    </script>
+</head>
+<body>
+    <!-- Background Ambient Lighting Gradients -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <!-- Main Navigation Header -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand">
+                <a href="/" class="brand-link">
+                    <!-- Modern Minimalist Custom Finance Logo: Wallet + Upward Financial Trend Graph -->
+                    <div class="brand-icon" title="Parshant's Expense">
+                        <svg class="brand-logo-svg" width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <linearGradient id="brandWalletGradTrans" x1="4" y1="8" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#3B82F6"/>
+                                    <stop offset="100%" stop-color="#1D4ED8"/>
+                                </linearGradient>
+                                <linearGradient id="brandTrendGradTrans" x1="4" y1="20" x2="28" y2="4" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#06B6D4"/>
+                                    <stop offset="100%" stop-color="#38BDF8"/>
+                                </linearGradient>
+                            </defs>
+                            <!-- Wallet Body -->
+                            <rect class="brand-wallet-rect" x="4" y="11" width="24" height="15" rx="3.5" stroke="url(#brandWalletGradTrans)" stroke-width="2.2" fill="rgba(15, 23, 42, 0.6)"/>
+                            <!-- Wallet Flap / Clasp -->
+                            <path class="brand-wallet-flap" d="M18.5 16H28V21H18.5C17.1193 21 16 19.8807 16 18.5C16 17.1193 17.1193 16 18.5 16Z" fill="#1E293B" stroke="url(#brandWalletGradTrans)" stroke-width="1.8"/>
+                            <circle cx="19.5" cy="18.5" r="1.3" fill="#38BDF8"/>
+                            <!-- Upward Financial Trend Graph -->
+                            <path d="M6.5 19.5L12 14L16.5 17.5L25 6" stroke="url(#brandTrendGradTrans)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M19.5 6H25V11.5" stroke="url(#brandTrendGradTrans)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="brand-text">
+                        <div class="brand-title">Parshant's <span>Expense</span></div>
+                        <div class="brand-subtitle">Budget Tracker</div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Top Navigation: Dashboard | Transactions -->
+            <nav class="top-nav">
+                <a href="/" class="top-nav-link" title="View Financial Dashboard">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/transactions" class="top-nav-link active" title="View Dedicated Transactions Page">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                        <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                        <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                        <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                    </svg>
+                    <span>Transactions</span>
+                </a>
+            </nav>
+
+            <div class="header-actions">
+                <button id="btn-export-csv" class="btn btn-secondary" title="Export transactions to Excel/CSV">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Export CSV</span>
+                </button>
+                <button id="btn-open-budget-modal" class="btn btn-secondary" title="Configure Monthly Budget">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"></path>
+                        <line x1="12" y1="6" x2="12" y2="8"></line>
+                        <line x1="12" y1="16" x2="12" y2="18"></line>
+                    </svg>
+                    <span>Monthly Budget</span>
+                </button>
+                <button id="btn-open-add-modal" class="btn btn-primary">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add Expense</span>
+                </button>
+                <button id="btn-open-clear-all" class="btn btn-danger-outline" title="Clear all sample data and start fresh">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Clear All</span>
+                </button>
+
+                <!-- Theme Toggle Button (Light / Dark Mode) -->
+                <button id="btn-theme-toggle" class="theme-toggle-btn" type="button" aria-label="Toggle Light and Dark Theme" title="Toggle Light / Dark Theme">
+                    <div class="theme-icon-container">
+                        <span class="theme-icon-sun" title="Light Theme">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="5"></circle>
+                                <line x1="12" y1="1" x2="12" y2="3"></line>
+                                <line x1="12" y1="21" x2="12" y2="23"></line>
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                <line x1="1" y1="12" x2="3" y2="12"></line>
+                                <line x1="21" y1="12" x2="23" y2="12"></line>
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                            </svg>
+                        </span>
+                        <span class="theme-icon-moon" title="Dark Theme">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                            </svg>
+                        </span>
+                    </div>
+                </button>
+
+                <!-- Top-Right Profile: Shows ONLY user's name, clickable to edit name -->
+                <div class="user-profile-badge clickable-name-badge" id="profile-trigger" role="button" tabindex="0" title="Click to edit name">
+                    <div class="user-avatar-wrapper">
+                        <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="Parshant Sharma" class="user-avatar-img" id="user-avatar-img" onerror="this.src='https://ui-avatars.com/api/?name=Parshant+Sharma&background=6366F1&color=fff'">
+                        <span class="user-status-online" title="Active Session"></span>
+                    </div>
+                    <div class="user-info-text">
+                        <span class="user-name" id="profile-display-name">Parshant Sharma</span>
+                    </div>
+                    <svg class="edit-name-pencil" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" title="Edit name">
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="dashboard-container">
+        
+        <!-- Page Title & Quick Ledger Stats -->
+        <section class="page-title-section">
+            <div class="title-text-group">
+                <div class="section-tag">EXPENSE LEDGER</div>
+                <h1 class="page-main-title">All Transactions</h1>
+                <p class="page-desc">Comprehensive record of all personal expenditures with instant search, category filters, and editing.</p>
+            </div>
+            <div class="ledger-quick-stats">
+                <div class="quick-stat-box">
+                    <span class="stat-label">Total Recorded</span>
+                    <span class="stat-value" id="ledger-total-amount">₹0.00</span>
+                </div>
+                <div class="quick-stat-box">
+                    <span class="stat-label">Transactions</span>
+                    <span class="stat-value" id="ledger-total-count">0 items</span>
+                </div>
+                <button id="btn-ledger-add" class="btn btn-primary btn-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Add Expense
+                </button>
+            </div>
+        </section>
+
+        <!-- Full Transactions Section -->
+        <section class="card transactions-section">
+            <div class="transactions-header">
+                <div>
+                    <div class="section-tag">DATA FILTERING</div>
+                    <h2 class="card-title">Filter & Search Records</h2>
+                </div>
+                <div class="transaction-count-badge">
+                    <span id="filtered-count">0</span> items shown
+                </div>
+            </div>
+
+            <!-- Filter & Search Toolbar -->
+            <div class="toolbar">
+                <!-- Search Input -->
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search by description or merchant..." aria-label="Search expenses">
+                    <button id="search-clear-btn" class="search-clear-btn hidden" title="Clear search">×</button>
+                </div>
+
+                <!-- Quick Month Selector -->
+                <div class="quick-month-wrapper">
+                    <select id="quick-month-select" class="form-control select-quick-month" title="Filter transactions by month">
+                        <option value="">📅 All Months</option>
+                    </select>
+                </div>
+
+                <!-- Date Range Filter -->
+                <div class="date-filter-group">
+                    <div class="date-field">
+                        <label for="filter-start-date">From</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    <div class="date-field">
+                        <label for="filter-end-date">To</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    <button id="btn-reset-filters" class="btn btn-sm btn-ghost" title="Reset all filters">Reset</button>
+                </div>
+            </div>
+
+            <!-- Category Filter Pills -->
+            <div class="category-pills" id="category-pills-container">
+                <button class="pill-btn active" data-category="All">All Categories</button>
+                <button class="pill-btn" data-category="Food">Food</button>
+                <button class="pill-btn" data-category="Travel">Travel</button>
+                <button class="pill-btn" data-category="Shopping">Shopping</button>
+                <button class="pill-btn" data-category="Education">Education</button>
+                <button class="pill-btn" data-category="Bills">Bills</button>
+                <button class="pill-btn" data-category="Entertainment">Entertainment</button>
+                <button class="pill-btn" data-category="Other">Other</button>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="table-responsive">
+                <table class="transactions-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Date</th>
+                            <th class="text-right">Amount</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-table-body">
+                        <!-- Populated dynamically via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="empty-state" class="empty-state hidden">
+                <div class="empty-state-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                </div>
+                <h3>No Transactions Found</h3>
+                <p>No expenses match your search or filter criteria. Click below to reset filters or record a new expense.</p>
+                <div class="empty-state-actions">
+                    <button id="empty-state-reset-btn" class="btn btn-secondary btn-sm">Clear Filters</button>
+                    <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-expense')">+ Add New Expense</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <div>Parshant Sharma &bull; Personal Finance Dashboard &bull; Built with Python Flask & SQLite</div>
+        </div>
+    </footer>
+
+    <!-- ======================================================== -->
+    <!-- MODALS                                                   -->
+    <!-- ======================================================== -->
+
+    <!-- MODAL 1: Add Expense Modal -->
+    <div id="modal-add-expense" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge">NEW TRANSACTION</div>
+                    <h3>Add Expense</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-add-expense" class="modal-form">
+                <div class="form-group">
+                    <label for="add-title">Description / Merchant <span class="req">*</span></label>
+                    <input type="text" id="add-title" placeholder="e.g. Flight ticket, Groceries, Dining out" required autofocus>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="add-amount">Amount (₹) <span class="req">*</span></label>
+                        <div class="input-currency-wrapper">
+                            <span class="currency-symbol">₹</span>
+                            <input type="number" id="add-amount" step="0.01" min="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-date">Date <span class="req">*</span></label>
+                        <input type="date" id="add-date" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-category">Category <span class="req">*</span></label>
+                    <select id="add-category" required>
+                        <option value="Food">🍽️ Food & Dining</option>
+                        <option value="Travel">✈️ Travel & Commute</option>
+                        <option value="Shopping">🛍️ Shopping & Retail</option>
+                        <option value="Education">🎓 Education & Career</option>
+                        <option value="Bills">💡 Bills & Utilities</option>
+                        <option value="Entertainment">🎬 Entertainment & Leisure</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-add">Save Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Edit Expense Modal -->
+    <div id="modal-edit-expense" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge">UPDATE RECORD</div>
+                    <h3>Edit Expense</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-edit-expense" class="modal-form">
+                <input type="hidden" id="edit-id">
+
+                <div class="form-group">
+                    <label for="edit-title">Description / Merchant <span class="req">*</span></label>
+                    <input type="text" id="edit-title" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-amount">Amount (₹) <span class="req">*</span></label>
+                        <div class="input-currency-wrapper">
+                            <span class="currency-symbol">₹</span>
+                            <input type="number" id="edit-amount" step="0.01" min="0.01" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-date">Date <span class="req">*</span></label>
+                        <input type="date" id="edit-date" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-category">Category <span class="req">*</span></label>
+                    <select id="edit-category" required>
+                        <option value="Food">🍽️ Food & Dining</option>
+                        <option value="Travel">✈️ Travel & Commute</option>
+                        <option value="Shopping">🛍️ Shopping & Retail</option>
+                        <option value="Education">🎓 Education & Career</option>
+                        <option value="Bills">💡 Bills & Utilities</option>
+                        <option value="Entertainment">🎬 Entertainment & Leisure</option>
+                        <option value="Other">📦 Other</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-edit">Update Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Configure Budget Modal -->
+    <div id="modal-budget" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge">FINANCIAL TARGET</div>
+                    <h3>Set Monthly Budget</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-budget" class="modal-form">
+                <p class="modal-description">
+                    Define your monthly expenditure ceiling. Apex tracks your spending pace and provides intelligent alerts when spending approaches this limit.
+                </p>
+                <div class="form-group">
+                    <label for="budget-input-val">Monthly Limit (₹) <span class="req">*</span></label>
+                    <div class="input-currency-wrapper">
+                        <span class="currency-symbol">₹</span>
+                        <input type="number" id="budget-input-val" step="100" min="100" placeholder="25000" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-budget">Save Budget Limit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Delete Confirmation Modal -->
+    <div id="modal-delete" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge badge-danger">CONFIRMATION</div>
+                    <h3>Delete Transaction?</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <p class="modal-description">
+                Are you sure you want to permanently delete this expense: <strong id="delete-item-title"></strong>? This operation cannot be undone.
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-delete">Delete Record</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Clear All Confirmation Modal -->
+    <div id="modal-clear-all" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge badge-danger">RESET DATA</div>
+                    <h3>Clear All Expenses?</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <p class="modal-description">
+                Are you sure you want to remove <strong>all current expenses and sample data</strong>? This will reset all transaction records and calculations so you can start adding your own expenses fresh.
+            </p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="btn-confirm-clear-all">Yes, Clear Everything</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: Profile Details Modal -->
+    <div id="modal-profile" class="modal" aria-hidden="true" role="dialog">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge">USER PROFILE</div>
+                    <h3>Account Profile</h3>
+                </div>
+                <button class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <div class="profile-card-content">
+                <div class="profile-avatar-large">
+                    <img src="{{ url_for('static', filename='images/profile.jpg') }}" alt="Parshant sharma" class="profile-large-img" onerror="this.src='https://ui-avatars.com/api/?name=Parshant+Sharma&background=6366F1&color=fff'">
+                    <span class="profile-status-dot"></span>
+                </div>
+                <div class="profile-details-text">
+                    <h4 class="profile-full-name">Parshant sharma</h4>
+                    <span class="profile-tag">Personal Finance Dashboard</span>
+                </div>
+                <div class="profile-info-grid">
+                    <div class="profile-info-item">
+                        <span class="info-label">Account Role</span>
+                        <span class="info-val">Portfolio Owner</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-label">Currency</span>
+                        <span class="info-val">INR (₹)</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-label">Security</span>
+                        <span class="info-val">Local SQLite Encrypted</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <span class="info-label">Platform</span>
+                        <span class="info-val">Apex Finance Pro</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-close="modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL: Edit Profile Name                                 -->
+    <!-- ======================================================== -->
+    <div id="modal-edit-name" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-edit-name-title-trans">
+        <div class="modal-backdrop" data-close="modal"></div>
+        <div class="modal-card modal-card-sm">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <div class="modal-badge">PROFILE SETTING</div>
+                    <h3 id="modal-edit-name-title-trans">Edit Name</h3>
+                </div>
+                <button type="button" class="modal-close-btn" data-close="modal" aria-label="Close modal">&times;</button>
+            </div>
+            <form id="form-edit-name" onsubmit="event.preventDefault();">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="input-user-name" class="form-label">Display Name</label>
+                    <input type="text" id="input-user-name" class="form-control" placeholder="Enter your name" maxlength="50" required autocomplete="name">
+                    <span class="form-hint" style="font-size: 0.78rem; color: var(--text-muted); margin-top: 6px; display: block;">
+                        Your name updates immediately and stays saved across sessions.
+                    </span>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" data-close="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-name">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
